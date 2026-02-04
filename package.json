@@ -1,0 +1,12 @@
+{
+  "name": "nbs-ips-qr-generator",
+  "version": "0.1.0",
+  "description": "Генератор NBS IPS QR кôдова",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "reinstall": "rm -rf node_modules && npm install"
+  }
+}
