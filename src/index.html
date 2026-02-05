@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="sr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Генератор NBS IPS QR кодова за плаћања у Републици Србији"
+    />
+    <meta name="theme-color" content="#21425d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="IPS QR Generator" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="icon-192.svg" />
+    <link rel="apple-touch-icon" href="icon-192.svg" />
+    <title>Генератор NBS IPS QR кôда</title>
+  </head>
+  <body>
+    <header>
+      <div class="header-left">
+        <button id="btn-menu" class="circle" aria-label="Menu">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+            fill="none"
+          >
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <h1>Генератор NBS IPS QR кôда</h1>
+      </div>
+      <div class="header-right">
+        <button id="btn-lang" class="circle">LAT</button>
+        <button id="btn-theme" class="circle" aria-label="Toggle theme">
+          <svg
+            id="icon-sun"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="5"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <path
+              d="M12 2V4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M12 20V22"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M4 12L2 12"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M22 12L20 12"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M19.7778 4.22266L17.5558 6.25424"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M4.22217 4.22266L6.44418 6.25424"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M6.44434 17.5557L4.22211 19.7779"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M19.7778 19.7773L17.5558 17.5551"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          <svg
+            id="icon-moon"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            style="display: none"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="overlay" id="drawer-overlay"></div>
+    <aside class="drawer" id="drawer">
+      <h2 id="drawer-title">Сачувани кодови</h2>
+      <ul id="saved-list"></ul>
+    </aside>
+
+    <main class="container">
+      <p class="note">
+        Сва поља обележена звездицом (<span class="asterisk">*</span>) морају
+        бити попуњена.
+      </p>
+
+      <form id="ips-form" autocomplete="off">
+        <div class="form-group">
+          <label for="field-R">
+            Број рачуна примаоца <span class="asterisk">*</span>
+          </label>
+          <input
+            type="text"
+            id="field-R"
+            inputmode="numeric"
+            placeholder="105-0000000000000-29"
+            required
+          />
+          <div id="feedback-R" class="field-feedback"></div>
+          <div class="bank-info">
+            <svg
+              id="bank-checkmark"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#10b981"
+              stroke-width="3"
+              style="display: none; flex-shrink: 0"
+            >
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <img id="bank-logo" class="bank-logo" alt="" />
+            <span id="bank-name"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="field-N">
+            Назив примаоца плаћања <span class="asterisk">*</span>
+          </label>
+          <input
+            type="text"
+            id="field-N"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="field-I">
+            Износ новчаних средстава <span class="asterisk">*</span>
+          </label>
+          <div style="display: flex; align-items: center; gap: 0.5rem">
+            <input
+              type="text"
+              id="field-I"
+              inputmode="decimal"
+              placeholder="545,95"
+              required
+            />
+            <span>RSD</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="field-P">Подаци о платиоцу</label>
+          <input type="text" id="field-P" />
+        </div>
+
+        <div class="form-group">
+          <label for="field-SF">
+            Шифра плаћања <span class="asterisk">*</span>
+          </label>
+
+          <select id="field-SF" required>
+            <option value="" disabled selected>Изаберите шифру...</option>
+
+            <optgroup label="Најчешће шифре">
+              <option value="253">
+                253 - Уплата јавних прихода изузев пореза и доприноса по одбитку
+              </option>
+              <option value="289">289 - Трансакције по налогу грађана</option>
+            </optgroup>
+
+            <optgroup label="Трансакције по основу промета робе и услуга">
+              <option value="220">
+                220 - Промет робе и услуга - међуфазна потрошња
+              </option>
+              <option value="221">
+                221 - Промет робе и услуга - финална потрошња
+              </option>
+              <option value="222">222 - Услуге јавних предузећа</option>
+              <option value="223">223 - Инвестиције у објекте и опрему</option>
+              <option value="224">224 - Инвестиције - остало</option>
+              <option value="225">
+                225 - Закупнине за непокретности у јавној својини
+              </option>
+              <option value="226">226 - Закупнине</option>
+              <option value="227">
+                227 - Субвенције, регреси и премије са посебних рачуна
+              </option>
+              <option value="228">
+                228 - Субвенције, регреси и премије са осталих рачуна
+              </option>
+              <option value="231">231 - Царине и друге увозне дажбине</option>
+            </optgroup>
+
+            <optgroup label="Трансакције расподеле">
+              <option value="240">240 - Зараде и примања запослених</option>
+              <option value="241">
+                241 - Неопорезива примања запослених, социјална и друга давања
+                изузета од опорезивања
+              </option>
+              <option value="242">
+                242 - Накнаде зарада на терет послодавца
+              </option>
+              <option value="244">
+                244 - Исплате преко омладинских и студентских задруга
+              </option>
+              <option value="245">245 - Пензије</option>
+              <option value="246">246 - Обуставе од пензија и зарада</option>
+              <option value="247">
+                247 - Накнаде зарада на терет других исплатилаца
+              </option>
+              <option value="248">
+                248 - Приходи физичких лица од капитала и других имовинских
+                права
+              </option>
+              <option value="249">249 - Остали приходи физичких лица</option>
+              <option value="253">
+                253 - Уплата јавних прихода изузев пореза и доприноса по одбитку
+              </option>
+              <option value="254">
+                254 - Уплата пореза и доприноса по одбитку
+              </option>
+              <option value="257">
+                257 - Повраћај више наплаћених или погрешно наплаћених текућих
+                прихода
+              </option>
+              <option value="258">
+                258 - Прекњижавање више уплаћених или погрешно уплаћених текућих
+                прихода
+              </option>
+            </optgroup>
+
+            <optgroup label="Трансфери">
+              <option value="260">
+                260 - Премије осигурања и надокнада штете
+              </option>
+              <option value="261">261 - Распоред текућих прихода</option>
+              <option value="262">
+                262 - Трансфери у оквиру државних органа
+              </option>
+              <option value="263">263 - Остали трансфери</option>
+              <option value="264">
+                264 - Пренос средстава из буџета за обезбеђење повраћаја више
+                наплаћених текућих прихода
+              </option>
+              <option value="265">265 - Уплата пазара</option>
+              <option value="266">266 - Исплата готовине</option>
+            </optgroup>
+
+            <optgroup label="Финансијске трансакције">
+              <option value="270">270 - Краткорочни кредити</option>
+              <option value="271">271 - Дугорочни кредити</option>
+              <option value="272">272 - Активна камата</option>
+              <option value="273">273 - Полагање орочених депозита</option>
+              <option value="275">275 - Остали пласмани</option>
+              <option value="276">276 - Отплата краткорочних кредита</option>
+              <option value="277">277 - Отплата дугорочних кредита</option>
+              <option value="278">278 - Повраћај орочених депозита</option>
+              <option value="279">279 - Пасивна камата</option>
+              <option value="280">280 - Есконт хартија од вредности</option>
+              <option value="281">
+                281 - Позајмице оснивача за ликвидност
+              </option>
+              <option value="282">
+                282 - Повраћај позајмице за ликвидност оснивачу
+              </option>
+              <option value="283">283 - Наплата чекова грађана</option>
+              <option value="284">284 - Платне картице</option>
+              <option value="285">285 - Мењачки послови</option>
+              <option value="286">286 - Купопродаја девиза</option>
+              <option value="287">287 - Донације и спонзорства</option>
+              <option value="288">288 - Донације</option>
+              <option value="289">289 - Трансакције по налогу грађана</option>
+              <option value="290">290 - Друге трансакције</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="field-S">Сврха плаћања</label>
+          <input
+            type="text"
+            id="field-S"
+            placeholder="нпр. плаћање рачуна"
+            maxlength="35"
+          />
+          <div id="feedback-S" class="field-feedback"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="field-RO">Позив на број одобрења</label>
+          <input type="text" id="field-RO" />
+          <div id="feedback-RO" class="field-feedback"></div>
+        </div>
+
+        <div style="display: flex; gap: 1rem">
+          <button type="submit" class="btn-primary" style="flex: 2">
+            Генериши Кôд
+          </button>
+          <button
+            type="button"
+            id="btn-save-code"
+            class="btn-primary"
+            style="flex: 1; background-color: #4b5563"
+          >
+            Сачувај
+          </button>
+        </div>
+      </form>
+
+      <div
+        id="qr-result-container"
+        class="hidden"
+        style="margin-top: 2rem; text-align: center"
+      >
+        <hr />
+        <h3>QR Кôд</h3>
+        <canvas id="qr-canvas" width="300" height="300"></canvas>
+
+        <p
+          style="
+            margin-top: 1rem;
+            font-family: monospace;
+            word-break: break-all;
+            background: #f3f4f6;
+            padding: 0.5rem;
+          "
+          id="qr-string-display"
+        ></p>
+      </div>
+    </main>
+  </body>
+</html>

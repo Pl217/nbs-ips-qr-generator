@@ -2,12 +2,18 @@
   "name": "nbs-ips-qr-generator",
   "version": "0.1.0",
   "description": "Генератор NBS IPS QR кôдова",
-  "license": "ISC",
-  "author": "",
+  "author": "Pl217",
   "type": "module",
-  "main": "index.js",
+  "engines": {
+    "node": ">=24.13.0",
+    "npm": ">=10.8.2 || >=11.6.2"
+  },
   "scripts": {
-    "reinstall": "rm -rf node_modules && npm install"
+    "clean": "rm -rf dist index.html manifest.json sw.js icon-192.svg icon-512.svg favicon.svg .nojekyll",
+    "reinstall": "rm -rf node_modules && npm install",
+    "compile": "tsc",
+    "bundle": "node build.js",
+    "build": "npm run compile && npm run bundle"
   },
   "devDependencies": {
     "typescript": "5.9.3"

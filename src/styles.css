@@ -1,0 +1,190 @@
+:root {
+    --primary: #b91c1c; /* Red color for NBS style */
+    --bg: #ffffff;
+    --surface: #f3f4f6;
+    --text: #1f2937;
+    --border: #d1d5db;
+    --input-bg: #ffffff;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --primary: #f87171;
+    --bg: #111827;
+    --surface: #1f2937;
+    --text: #f9fafb;
+    --border: #374151;
+    --input-bg: #111827;
+}
+
+* { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.header-left, .header-right { display: flex; gap: 1rem; align-items: center; }
+
+h1 { margin: 0; font-size: 1.25rem; }
+
+.container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1rem;
+}
+
+.form-group { margin-bottom: 1.5rem; position: relative; }
+
+label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.asterisk { color: var(--primary); }
+
+input, select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background-color: var(--input-bg);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+input:focus {
+    outline: 2px solid var(--primary);
+    border-color: transparent;
+}
+
+input.error { border-color: var(--primary); }
+
+.field-feedback { 
+    font-size: 0.875rem; 
+    margin-top: 0.25rem; 
+    display: none; /* Скривено по default-у */
+}
+.field-feedback.error { 
+    color: var(--primary); 
+}
+
+.bank-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+.bank-logo { width: 24px; height: 24px; background: #ddd; border-radius: 4px; display: none; }
+
+button.circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+}
+
+button.circle:hover {
+    opacity: 0.8;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+/* Drawer */
+.drawer {
+    position: fixed;
+    top: 0; left: -300px;
+    width: 280px;
+    height: 100%;
+    background: var(--surface);
+    z-index: 50;
+    transition: 0.3s;
+    padding: 1rem;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+}
+.drawer.open { left: 0; }
+.overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 40;
+    opacity: 0; pointer-events: none;
+    transition: 0.3s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+
+.hidden { display: none; }
+
+#qr-result-container {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 1rem;
+}
+
+#qr-canvas { 
+    max-width: 100%; 
+    display: block;
+    margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+    h1 { font-size: 1rem; }
+}
+
+/* Drawer List Styles */
+#saved-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+}
+.saved-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.saved-item:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+[data-theme="dark"] .saved-item:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+.btn-delete-small {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 0.5rem;
+}
