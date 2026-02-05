@@ -2,7 +2,7 @@
   "name": "Генератор NBS IPS QR кôда",
   "short_name": "IPS QR",
   "description": "Генератор NBS IPS QR кôдова за плаћања у Републици Србији",
-  "start_url": "/index.html",
+  "start_url": "/nbs-ips-qr-generator/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#21425d",

@@ -1,5 +1,8 @@
 const CACHE_NAME = 'ips-qr-generator-v1';
-const urlsToCache = ['/index.html', '/'];
+const urlsToCache = [
+  '/nbs-ips-qr-generator/',
+  '/nbs-ips-qr-generator/index.html',
+];
 
 // Инсталација Service Worker-а
 self.addEventListener('install', (event) => {
