@@ -70,14 +70,16 @@ class App {
     });
     accInput?.addEventListener('blur', () => this.handleAccountBlur(accInput));
 
-    // 2. Name inputs restriction - само српска слова и размаци
+    // 2. Name inputs restriction - српска слова, размаци, бројеви, тачка и зарез
     ['field-N', 'field-P'].forEach((id) => {
       const el = document.getElementById(id) as HTMLInputElement;
+
+      const lettersAndDigits =
+        'абвгдђежзијклљмнњопрстћуфхцчџшАБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШabcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
+      const validChars = lettersAndDigits + ' .,';
+
       el.addEventListener('input', (e) => {
         const t = e.target as HTMLInputElement;
-        const validChars =
-          'абвгдђежзијклљмнњопрстћуфхцчџшАБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШabcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ ';
-
         let filtered = '';
         for (let i = 0; i < t.value.length; i++) {
           if (validChars.includes(t.value[i])) {
@@ -87,10 +89,12 @@ class App {
         t.value = filtered;
       });
 
-      // Валидација при blur - не дозволи само размаке
+      // Валидација при blur - мора имати бар једно слово или број
       el.addEventListener('blur', (e) => {
         const t = e.target as HTMLInputElement;
-        if (!isValidName(t.value)) {
+        if (![...t.value].some((c) => lettersAndDigits.includes(c))) {
+          t.value = '';
+        } else if (!isValidName(t.value)) {
           t.value = t.value.trim();
         }
       });

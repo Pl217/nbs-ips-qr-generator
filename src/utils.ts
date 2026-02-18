@@ -99,24 +99,22 @@ export function validateReferenceNumber(ref: string): boolean {
 }
 
 /**
- * Валидација имена (дозвољава САМО српска слова и размаке).
- * Не дозволи само размаке без слова.
+ * Валидација имена (дозвољава српска слова, размаке, бројеве, тачку и зарез).
+ * Не дозволи само размаке/тачке/зарезе без слова или бројева.
  */
 export function isValidName(text: string): boolean {
   // Валидна слова ћирилице и латинице
-  const validChars =
-    'абвгдђежзијклљмнњопрстћуфхцчџшАБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШabcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ ';
+  const lettersAndDigits =
+    'абвгдђежзијклљмнњопрстћуфхцчџшАБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШabcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
+  const validChars = lettersAndDigits + ' .,';
 
-  // Провера да ли сви карактери су валидни
-  for (let i = 0; i < text.length; i++) {
-    if (!validChars.includes(text[i])) {
-      return false;
-    }
+  // Провера да ли су сви карактери валидни
+  if (![...text].every((c) => validChars.includes(c))) {
+    return false;
   }
 
-  // Провера да постоји бар једно слово (не само размаци)
-  const lettersOnly = text.replace(/ /g, '');
-  return lettersOnly.length > 0;
+  // Провера да постоји бар једно слово или број
+  return [...text].some((c) => lettersAndDigits.includes(c));
 }
 
 /**
