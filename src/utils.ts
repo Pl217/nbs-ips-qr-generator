@@ -105,7 +105,7 @@ export function validateReferenceNumber(ref: string): boolean {
 export function isValidName(text: string): boolean {
   // Валидна слова ћирилице и латинице
   const lettersAndDigits =
-    'абвгдђежзијклљмнњопрстћуфхцчџшАБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШabcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
+    'abcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
   const validChars = lettersAndDigits + ' .,';
 
   // Провера да ли су сви карактери валидни

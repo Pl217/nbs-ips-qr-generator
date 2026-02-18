@@ -75,7 +75,7 @@ class App {
       const el = document.getElementById(id) as HTMLInputElement;
 
       const lettersAndDigits =
-        'абвгдђежзијклљмнњопрстћуфхцчџшАБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШabcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
+        'abcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
       const validChars = lettersAndDigits + ' .,';
 
       el.addEventListener('input', (e) => {
