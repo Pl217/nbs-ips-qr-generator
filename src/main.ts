@@ -1,4 +1,4 @@
-import { BANKS, TRANSLATIONS } from './data';
+import { BANKS, TRANSLATIONS, PAYMENT_CODES } from './data';
 import { QRCodeRenderer } from './qr-lib';
 import { IpsFormData, Lang, Theme } from './types';
 import {
@@ -518,6 +518,42 @@ class App {
     this.updateThemeIcon();
   }
 
+  updateSelectFieldLanguage() {
+    const selectField = document.getElementById(
+      'field-SF'
+    ) as HTMLSelectElement;
+    if (!selectField) {
+      return;
+    }
+
+    // Очистимо поље
+    selectField.innerHTML = '';
+
+    // Додајемо placeholder опцију
+    const placeholderOption = document.createElement('option');
+    placeholderOption.value = '';
+    placeholderOption.disabled = true;
+    placeholderOption.selected = true;
+    placeholderOption.textContent = PAYMENT_CODES.placeholder[this.lang];
+    selectField.appendChild(placeholderOption);
+
+    // Додајемо групе опција
+    const groups = PAYMENT_CODES.groups[this.lang];
+    for (const group of groups) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group.label;
+
+      for (const code of group.codes) {
+        const option = document.createElement('option');
+        option.value = code.value;
+        option.textContent = code.text;
+        optgroup.appendChild(option);
+      }
+
+      selectField.appendChild(optgroup);
+    }
+  }
+
   applyLang() {
     const t = TRANSLATIONS[this.lang];
 
@@ -558,6 +594,9 @@ class App {
         input.placeholder = placeholder;
       }
     });
+
+    // Ажурирај опције у field-SF селекту
+    this.updateSelectFieldLanguage();
 
     this.renderDrawerList();
   }
