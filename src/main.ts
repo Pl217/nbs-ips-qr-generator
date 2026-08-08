@@ -122,11 +122,26 @@ class App {
       });
     });
 
-    // 3. Purpose field (S) - максимално 35 карактера
+    // 3. Purpose field (S) - исти дозвољени карактери као N/P (српска
+    // латиница, бројеви, размак и специјални карактери НБС спецификације),
+    // али у једној линији и максимално 35 карактера.
     const purposeInput = document.getElementById('field-S') as HTMLInputElement;
 
     purposeInput.addEventListener('input', () => {
       const feedback = document.getElementById('feedback-S');
+
+      // Филтрирање - дозвољавамо само важеће карактере (isValidNameChar
+      // већ одбацује знак за нову линију, чиме се обезбеђује да садржај
+      // остане у једној линији чак и приликом лепљења вишелинијског текста).
+      let filtered = '';
+      for (let i = 0; i < purposeInput.value.length; i++) {
+        const ch = purposeInput.value[i];
+        if (isValidNameChar(ch)) {
+          filtered += ch;
+        }
+      }
+      purposeInput.value = filtered;
+
       if (!feedback) return;
 
       const length = purposeInput.value.length;
