@@ -163,6 +163,14 @@ class App {
         return;
       }
 
+      // Дозволи тастатурне пречице (нпр. Ctrl+V/Cmd+V за лепљење, Ctrl+C,
+      // Ctrl+A, Ctrl+X, Ctrl+Z...) - у супротном, preventDefault() испод
+      // спречава browser да уопште покрене paste акцију па чак и paste
+      // event handler никад не би био позван.
+      if (e.ctrlKey || e.metaKey) {
+        return;
+      }
+
       const currentVal = amtInput.value;
 
       // Провери да ли већ постоји запета
