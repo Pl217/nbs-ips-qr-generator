@@ -2,9 +2,14 @@ import { BANKS, TRANSLATIONS, PAYMENT_CODES } from './data';
 import { QRCodeRenderer } from './qr-lib';
 import { IpsFormData, Lang, Theme } from './types';
 import {
+  buildMultilineTagContent,
   ensureDecimalPart,
   formatAmountDisplay,
+  isValidAmountPaste,
   isValidName,
+  isValidNameChar,
+  NAME_MAX_LENGTH,
+  NAME_MAX_LINES,
   parseAmountInput,
   validateBankAccount,
   validateReferenceNumber,
@@ -70,32 +75,49 @@ class App {
     });
     accInput?.addEventListener('blur', () => this.handleAccountBlur(accInput));
 
-    // 2. Name inputs restriction - српска слова, размаци, бројеви, тачка и зарез
+    // 2. Name/Payer inputs (N, P) - вишелинијска поља (до 3 линије),
+    // српска латиница, бројеви, размаци и дозвољени специјални карактери
+    // (у складу са табелом специјалних карактера НБС спецификације).
     ['field-N', 'field-P'].forEach((id) => {
-      const el = document.getElementById(id) as HTMLInputElement;
-
-      const lettersAndDigits =
-        'abcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
-      const validChars = lettersAndDigits + ' .,';
+      const el = document.getElementById(id) as HTMLTextAreaElement;
+      const tag = id.replace('field-', '');
 
       el.addEventListener('input', (e) => {
-        const t = e.target as HTMLInputElement;
+        const t = e.target as HTMLTextAreaElement;
+
+        // Филтрирање - дозвољавамо само важеће карактере и знак за нову
+        // линију (до NAME_MAX_LINES линија укупно).
         let filtered = '';
+        let lineCount = 0;
         for (let i = 0; i < t.value.length; i++) {
-          if (validChars.includes(t.value[i])) {
-            filtered += t.value[i];
+          const ch = t.value[i];
+          if (ch === '\n') {
+            if (lineCount < NAME_MAX_LINES - 1) {
+              filtered += ch;
+              lineCount++;
+            }
+            continue;
+          }
+          if (isValidNameChar(ch)) {
+            filtered += ch;
           }
         }
+
+        // Ограничење укупне дужине садржаја на NAME_MAX_LENGTH карактера
+        if (filtered.length > NAME_MAX_LENGTH) {
+          filtered = filtered.substring(0, NAME_MAX_LENGTH);
+        }
+
         t.value = filtered;
+        this.updateNameFieldFeedback(tag, filtered);
       });
 
       // Валидација при blur - мора имати бар једно слово или број
       el.addEventListener('blur', (e) => {
-        const t = e.target as HTMLInputElement;
-        if (![...t.value].some((c) => lettersAndDigits.includes(c))) {
+        const t = e.target as HTMLTextAreaElement;
+        if (!isValidName(t.value)) {
           t.value = '';
-        } else if (!isValidName(t.value)) {
-          t.value = t.value.trim();
+          this.updateNameFieldFeedback(tag, '');
         }
       });
     });
@@ -224,6 +246,48 @@ class App {
       amtInput.value = formatAmountDisplay(withDecimals);
     });
 
+    // Лепљење (paste) у поље износа - дозвољено само ако садржај
+    // задовољава важећи формат износа (цифре, опционо тачке као
+    // сепаратор хиљада, опционо зарез са до 2 децимале).
+    amtInput.addEventListener('paste', (e: ClipboardEvent) => {
+      e.preventDefault();
+
+      const clipboardData = e.clipboardData || (window as any).clipboardData;
+      const pasted = clipboardData
+        ? (clipboardData.getData('text') as string)
+        : '';
+
+      const feedback = document.getElementById('feedback-I');
+
+      if (!isValidAmountPaste(pasted)) {
+        amtInput.classList.add('error');
+        if (feedback) {
+          feedback.style.display = 'block';
+          feedback.textContent =
+            TRANSLATIONS[this.lang].validation.invalidAmountPaste;
+          feedback.classList.add('error');
+        }
+        return;
+      }
+
+      amtInput.classList.remove('error');
+      if (feedback) {
+        feedback.style.display = 'none';
+        feedback.textContent = '';
+      }
+
+      const start = amtInput.selectionStart ?? amtInput.value.length;
+      const end = amtInput.selectionEnd ?? amtInput.value.length;
+      const trimmedPaste = pasted.trim();
+      amtInput.value =
+        amtInput.value.slice(0, start) +
+        trimmedPaste +
+        amtInput.value.slice(end);
+
+      // Тригерујемо постојећу input логику (лимит децимала, филтрирање итд.)
+      amtInput.dispatchEvent(new Event('input'));
+    });
+
     // 5. Reference (RO) - алфанумеричка валидација по ISO/IEC 7064
     const roInput = document.getElementById('field-RO') as HTMLInputElement;
 
@@ -320,6 +384,29 @@ class App {
     }
   }
 
+  updateNameFieldFeedback(tag: string, value: string) {
+    const feedback = document.getElementById(`feedback-${tag}`);
+    if (!feedback) {
+      return;
+    }
+
+    const lineCount = value.split('\n').length;
+    const remaining = NAME_MAX_LENGTH - value.length;
+
+    if (lineCount >= NAME_MAX_LINES && remaining <= 10) {
+      feedback.style.display = 'block';
+      feedback.textContent = `${TRANSLATIONS[this.lang].validation.nameTooManyLines} (${remaining} ${TRANSLATIONS[this.lang].validation.charactersRemaining})`;
+      feedback.classList.remove('error');
+    } else if (remaining <= 10) {
+      feedback.style.display = 'block';
+      feedback.textContent = `${remaining} ${TRANSLATIONS[this.lang].validation.charactersRemaining}`;
+      feedback.classList.remove('error');
+    } else {
+      feedback.style.display = 'none';
+      feedback.textContent = '';
+    }
+  }
+
   updateBankNameLanguage() {
     // Ажурирај назив банке када се промени језик
     if (this.currentBankId) {
@@ -343,9 +430,9 @@ class App {
       V: '01',
       C: '1',
       R: (document.getElementById('field-R') as HTMLInputElement).value,
-      N: (document.getElementById('field-N') as HTMLInputElement).value,
+      N: (document.getElementById('field-N') as HTMLTextAreaElement).value,
       I: (document.getElementById('field-I') as HTMLInputElement).value,
-      P: (document.getElementById('field-P') as HTMLInputElement).value,
+      P: (document.getElementById('field-P') as HTMLTextAreaElement).value,
       SF: (document.getElementById('field-SF') as HTMLInputElement).value,
       S: (document.getElementById('field-S') as HTMLInputElement).value,
       RO: (document.getElementById('field-RO') as HTMLInputElement).value,
@@ -400,11 +487,15 @@ class App {
   loadCode(data: IpsFormData) {
     // Попуни поља
     const setVal = (id: string, val: string) =>
-      ((document.getElementById(`field-${id}`) as HTMLInputElement).value =
-        val);
+      ((
+        document.getElementById(`field-${id}`) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+      ).value = val);
 
     setVal('R', data.R);
     setVal('N', data.N);
+    this.updateNameFieldFeedback('N', data.N || '');
 
     // Форматирај износ
     const rawAmount = parseAmountInput(data.I);
@@ -417,6 +508,7 @@ class App {
     }
 
     setVal('P', data.P);
+    this.updateNameFieldFeedback('P', data.P || '');
     setVal('SF', data.SF);
     setVal('S', data.S);
     setVal('RO', data.RO);
@@ -438,13 +530,17 @@ class App {
       )?.value.trim() || '';
 
     const R = getVal('R').replace(/-/g, '');
-    const N = getVal('N');
+
+    // Уклањамо вишак празних линија (нпр. ако адреса није унета, а место
+    // јесте, средња празна линија се уклања у складу са препоруком НБС
+    // спецификације - назив у једној линији, место у другој).
+    const N = buildMultilineTagContent(getVal('N'));
 
     // Износ: Уклањамо тачке (сепараторе), зарез остаје
     const rawI = getVal('I').replace(/\./g, '');
     const I_fmt = `RSD${rawI}`;
 
-    const P = getVal('P');
+    const P = buildMultilineTagContent(getVal('P'));
     const SF = getVal('SF');
     const S = getVal('S');
     const RO = getVal('RO');
@@ -563,6 +659,16 @@ class App {
     document.getElementById('drawer-title')!.textContent = t.drawerTitle;
     document.getElementById('btn-save-code')!.textContent = t.btnSave;
 
+    // Лабеле "Валута" и "Модел" (нису везане за поља која се уписују у QR)
+    const currencyLabel = document.getElementById('label-currency');
+    if (currencyLabel) {
+      currencyLabel.textContent = t.currencyLabel;
+    }
+    const modelLabel = document.getElementById('label-model');
+    if (modelLabel) {
+      modelLabel.textContent = t.modelLabel;
+    }
+
     // Ажурирај лабеле
     Object.keys(t.fields).forEach((key) => {
       const label = document.querySelector(`label[for="field-${key}"]`);
@@ -578,18 +684,25 @@ class App {
       }
     });
 
-    // Ажурирај placeholder-е
+    // Ажурирај placeholder-е - увек на латиници (TRANSLATIONS.lat), без
+    // обзира на изабрано писмо интерфејса, јер ћирилична слова нису
+    // дозвољена у тексту на основу кога се генерише QR кôд (видети
+    // напомену изнад форме).
+    const latPlaceholders = TRANSLATIONS.lat.placeholders;
     const placeholders: Record<string, string> = {
-      'field-R': t.placeholders.accountNumber,
-      'field-N': t.placeholders.recipientName,
-      'field-I': t.placeholders.amount,
-      'field-P': t.placeholders.payerData,
-      'field-S': t.placeholders.purpose,
-      'field-RO': t.placeholders.reference,
+      'field-R': latPlaceholders.accountNumber,
+      'field-N': latPlaceholders.recipientName,
+      'field-I': latPlaceholders.amount,
+      'field-P': latPlaceholders.payerData,
+      'field-S': latPlaceholders.purpose,
+      'field-RO': latPlaceholders.reference,
     };
 
     Object.entries(placeholders).forEach(([id, placeholder]) => {
-      const input = document.getElementById(id) as HTMLInputElement;
+      const input = document.getElementById(id) as
+        | HTMLInputElement
+        | HTMLTextAreaElement
+        | null;
       if (input) {
         input.placeholder = placeholder;
       }

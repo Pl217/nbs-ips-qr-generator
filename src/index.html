@@ -128,90 +128,106 @@
       </p>
 
       <form id="ips-form" autocomplete="off">
-        <div class="form-group">
-          <label for="field-R">
-            Број рачуна примаоца <span class="asterisk">*</span>
-          </label>
-          <input
-            type="text"
-            id="field-R"
-            inputmode="numeric"
-            placeholder="105-0000000000000-29"
-            required
-          />
-          <div id="feedback-R" class="field-feedback"></div>
-          <div class="bank-info">
-            <svg
-              id="bank-checkmark"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#10b981"
-              stroke-width="3"
-              style="display: none; flex-shrink: 0"
-            >
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <img id="bank-logo" class="bank-logo" alt="" />
-            <span id="bank-name"></span>
+        <div class="form-grid">
+          <!-- Лева колона: платилац / сврха / прималац -->
+          <div class="form-col form-col-left">
+            <div class="form-group">
+              <label for="field-P">Подаци о платиоцу</label>
+              <textarea id="field-P" rows="3"></textarea>
+              <div id="feedback-P" class="field-feedback"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="field-S">Сврха плаћања</label>
+              <input type="text" id="field-S" maxlength="35" />
+              <div id="feedback-S" class="field-feedback"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="field-N">
+                Назив примаоца плаћања <span class="asterisk">*</span>
+              </label>
+              <textarea id="field-N" rows="3" required></textarea>
+              <div id="feedback-N" class="field-feedback"></div>
+            </div>
+          </div>
+
+          <!-- Десна колона: шифра/валута/износ, рачун примаоца, позив на број -->
+          <div class="form-col form-col-right">
+            <div class="form-row form-row-top">
+              <div class="form-group form-group-sm">
+                <label for="field-SF">
+                  Шифра плаћања <span class="asterisk">*</span>
+                </label>
+                <select id="field-SF" required></select>
+              </div>
+
+              <div class="form-group form-group-sm">
+                <label for="field-currency" id="label-currency">Валута</label>
+                <input type="text" id="field-currency" value="RSD" disabled />
+              </div>
+
+              <div class="form-group form-group-lg">
+                <label for="field-I">
+                  Износ новчаних средстава <span class="asterisk">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="field-I"
+                  inputmode="decimal"
+                  placeholder="545,95"
+                  required
+                />
+                <div id="feedback-I" class="field-feedback"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="field-R">
+                Број рачуна примаоца <span class="asterisk">*</span>
+              </label>
+              <input
+                type="text"
+                id="field-R"
+                inputmode="numeric"
+                placeholder="105-0000000000000-29"
+                required
+              />
+              <div id="feedback-R" class="field-feedback"></div>
+              <div class="bank-info">
+                <svg
+                  id="bank-checkmark"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#10b981"
+                  stroke-width="3"
+                  style="display: none; flex-shrink: 0"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <img id="bank-logo" class="bank-logo" alt="" />
+                <span id="bank-name"></span>
+              </div>
+            </div>
+
+            <div class="form-row form-row-ro">
+              <div class="form-group form-group-sm">
+                <label for="field-model" id="label-model">Модел</label>
+                <input type="text" id="field-model" value="97" disabled />
+              </div>
+
+              <div class="form-group form-group-lg">
+                <label for="field-RO">Позив на број одобрења</label>
+                <input type="text" id="field-RO" />
+                <div id="feedback-RO" class="field-feedback"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="field-N">
-            Назив примаоца плаћања <span class="asterisk">*</span>
-          </label>
-          <input type="text" id="field-N" required />
-        </div>
-
-        <div class="form-group">
-          <label for="field-I">
-            Износ новчаних средстава <span class="asterisk">*</span>
-          </label>
-          <div style="display: flex; align-items: center; gap: 0.5rem">
-            <input
-              type="text"
-              id="field-I"
-              inputmode="decimal"
-              placeholder="545,95"
-              required
-            />
-            <span>RSD</span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="field-P">Подаци о платиоцу</label>
-          <input type="text" id="field-P" />
-        </div>
-
-        <div class="form-group">
-          <label for="field-SF">
-            Шифра плаћања <span class="asterisk">*</span>
-          </label>
-
-          <select id="field-SF" required></select>
-        </div>
-
-        <div class="form-group">
-          <label for="field-S">Сврха плаћања</label>
-          <input
-            type="text"
-            id="field-S"
-            placeholder="нпр. плаћање рачуна"
-            maxlength="35"
-          />
-          <div id="feedback-S" class="field-feedback"></div>
-        </div>
-
-        <div class="form-group">
-          <label for="field-RO">Позив на број одобрења</label>
-          <input type="text" id="field-RO" />
-          <div id="feedback-RO" class="field-feedback"></div>
-        </div>
-
-        <div style="display: flex; gap: 1rem">
+        <div style="display: flex; gap: 1rem; margin-top: 1rem">
           <button type="submit" class="btn-primary" style="flex: 2">
             Генериши Кôд
           </button>

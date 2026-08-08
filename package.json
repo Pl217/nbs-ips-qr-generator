@@ -1,6 +1,6 @@
 {
   "name": "nbs-ips-qr-generator",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Генератор NBS IPS QR кôдова",
   "author": "Pl217",
   "type": "module",

@@ -50,7 +50,7 @@ h1 { margin: 0; font-size: 1.25rem; }
 label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
 .asterisk { color: var(--primary); }
 
-input, select {
+input, select, textarea {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--border);
@@ -60,12 +60,88 @@ input, select {
     font-size: 1rem;
 }
 
-input:focus {
+textarea {
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+input:focus, textarea:focus, select:focus {
     outline: 2px solid var(--primary);
     border-color: transparent;
 }
 
-input.error { border-color: var(--primary); }
+input.error, textarea.error { border-color: var(--primary); }
+
+input:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    text-align: center;
+    font-weight: 600;
+}
+
+.note-secondary {
+    font-size: 0.85rem;
+    opacity: 0.75;
+    margin-top: -0.5rem;
+}
+
+/* Распоред форме - на десктопу опонаша распоред налога за пренос
+   (лева колона: платилац / сврха / прималац;
+    десна колона: шифра+валута+износ / рачун примаоца / позив на број) */
+.form-grid {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-col-left,
+.form-col-right {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.form-row .form-group { flex: 1; min-width: 0; }
+.form-row-top .form-group-sm:first-child { flex: 1.5; }
+.form-row-top .form-group-sm:nth-child(2) { flex: 0.5; }
+.form-row-top .form-group-lg { flex: 1.7; }
+.form-row-ro .form-group-sm { flex: 0.3; }
+.form-row-ro .form-group-lg { flex: 2; }
+
+.form-row label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (min-width: 900px) {
+    .container { max-width: 900px; }
+
+    .form-grid {
+        flex-direction: row;
+        gap: 2.5rem;
+        align-items: flex-start;
+    }
+
+    .form-col-left,
+    .form-col-right {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .form-col-left {
+        border-right: 1px solid var(--border);
+        padding-right: 2.5rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .container { max-width: 1200px; }
+}
 
 .field-feedback { 
     font-size: 0.875rem; 

@@ -99,22 +99,130 @@ export function validateReferenceNumber(ref: string): boolean {
 }
 
 /**
- * Валидација имена (дозвољава српска слова, размаке, бројеве, тачку и зарез).
- * Не дозволи само размаке/тачке/зарезе без слова или бројева.
+ * Слова и бројеви дозвољени у пољима "Назив примаоца плаћања" (N) и
+ * "Подаци о платиоцу" (P). Само српска латиница (ћирилица није дозвољена
+ * у тексту на основу кога се генерише QR кôд).
+ */
+export const NAME_LETTERS_AND_DIGITS =
+  'abcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
+
+/**
+ * Специјални карактери дозвољени у пољима N и P, у складу са табелом
+ * специјалних карактера из НБС спецификације (Препоруке за NBS IPS QR кôд).
+ */
+export const NAME_ALLOWED_SPECIAL_CHARS: string[] = [
+  '!',
+  '(',
+  '/',
+  '@',
+  '}',
+  '“',
+  ')',
+  ':',
+  '[',
+  '~',
+  '#',
+  '*',
+  ';',
+  ']',
+  '„',
+  '$',
+  '+',
+  '<',
+  '^',
+  '”',
+  '%',
+  ',',
+  '=',
+  '_',
+  '"',
+  '&',
+  '-',
+  '>',
+  '`',
+  '’',
+  '‘',
+  '.',
+  '?',
+  '{',
+  "'",
+];
+
+/** Максималан број карактера дозвољен у тагу N/P (укључујући размаке). */
+export const NAME_MAX_LENGTH = 70;
+
+/** Максималан број линија дозвољен у тагу N/P. */
+export const NAME_MAX_LINES = 3;
+
+/**
+ * Провера да ли је појединачни карактер дозвољен у пољима N/P
+ * (слово, цифра, размак или дозвољени специјални карактер).
+ */
+export function isValidNameChar(char: string): boolean {
+  return (
+    NAME_LETTERS_AND_DIGITS.includes(char) ||
+    char === ' ' ||
+    NAME_ALLOWED_SPECIAL_CHARS.includes(char)
+  );
+}
+
+/**
+ * Валидација вишелинијског имена/података (дозвољава српску латиницу,
+ * размаке, бројеве и специјалне карактере у складу са НБС спецификацијом).
+ * Дозвољено је највише 3 линије (раздвојене знаком за нову линију).
+ * Не дозволи само размаке/специјалне карактере без слова или бројева.
  */
 export function isValidName(text: string): boolean {
-  // Валидна слова ћирилице и латинице
-  const lettersAndDigits =
-    'abcčćdđefghijklmnoprsštuvzžABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ0123456789';
-  const validChars = lettersAndDigits + ' .,';
+  const lines = text.split('\n');
 
-  // Провера да ли су сви карактери валидни
-  if (![...text].every((c) => validChars.includes(c))) {
+  // Провера максималног броја линија
+  if (lines.length > NAME_MAX_LINES) {
     return false;
   }
 
-  // Провера да постоји бар једно слово или број
-  return [...text].some((c) => lettersAndDigits.includes(c));
+  // Провера да ли су сви карактери валидни (осим знака за нову линију)
+  for (const line of lines) {
+    if (![...line].every((c) => isValidNameChar(c))) {
+      return false;
+    }
+  }
+
+  // Провера да постоји бар једно слово или број у целом садржају
+  return [...text].some((c) => NAME_LETTERS_AND_DIGITS.includes(c));
+}
+
+/**
+ * Припрема вишелинијски садржај тагова N/P за упис у текстуални запис
+ * QR кôда: уклања вишак празних линија (нпр. ако корисник не унесе адресу
+ * већ само место седишта примаоца, средња празна линија се уклања како
+ * би назив примаоца био у једној линији, а место у другој, у складу са
+ * препоруком НБС спецификације) и уклања сувишне размаке.
+ */
+export function buildMultilineTagContent(raw: string): string {
+  return raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .join('\n');
+}
+
+/**
+ * Провера да ли садржај налепљен (paste) у поље износа задовољава
+ * стандард онога што сме бити унето у поље: цифре, опционо тачке као
+ * сепаратор хиљада и опционо зарез са до 2 децимале.
+ */
+export function isValidAmountPaste(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  // Формат са тачкама као сепаратором хиљада, нпр. 1.234.567,89
+  const formattedPattern = /^\d{1,3}(\.\d{3})*(,\d{1,2})?$/;
+  // Формат без сепаратора хиљада, нпр. 545,95 или 545
+  const plainPattern = /^\d+(,\d{1,2})?$/;
+
+  return formattedPattern.test(trimmed) || plainPattern.test(trimmed);
 }
 
 /**

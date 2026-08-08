@@ -32,6 +32,8 @@ export const TRANSLATIONS = {
     title: 'Генератор NBS IPS QR кôда',
     requiredNote:
       "Сва поља обележена звездицом (<span class='asterisk'>*</span>) морају бити попуњена.",
+    modelLabel: 'Модел',
+    currencyLabel: 'Валута',
     fields: {
       R: 'Број рачуна примаоца',
       N: 'Назив примаоца плаћања',
@@ -55,6 +57,8 @@ export const TRANSLATIONS = {
       invalidReference: 'Неисправан позив на број (провера модулом 97).',
       purposeTooLong: 'Сврха плаћања не може имати више од 35 карактера.',
       charactersRemaining: 'карактера преостало',
+      nameTooManyLines: 'Дозвољено је највише 3 линије.',
+      invalidAmountPaste: 'Налепљени садржај није у важећем формату износа.',
     },
     placeholders: {
       saveName: 'Унесите назив за чување...',
@@ -70,6 +74,8 @@ export const TRANSLATIONS = {
     title: 'Generator NBS IPS QR kôda',
     requiredNote:
       "Sva polja obeležena zvezdicom (<span class='asterisk'>*</span>) moraju biti popunjena.",
+    modelLabel: 'Model',
+    currencyLabel: 'Valuta',
     fields: {
       R: 'Broj računa primaoca',
       N: 'Naziv primaoca plaćanja',
@@ -93,13 +99,15 @@ export const TRANSLATIONS = {
       invalidReference: 'Neispravan poziv na broj (provera modulom 97).',
       purposeTooLong: 'Svrha plaćanja ne može imati više od 35 karaktera.',
       charactersRemaining: 'karaktera preostalo',
+      nameTooManyLines: 'Dozvoljeno je najviše 3 linije.',
+      invalidAmountPaste: 'Nalepljeni sadržaj nije u važećem formatu iznosa.',
     },
     placeholders: {
       saveName: 'Unesite naziv za čuvanje...',
       accountNumber: '105-0000000000000-29',
-      recipientName: 'npr. Žika Žikić',
+      recipientName: 'npr. Žika Žikić\nulica i broj (opciono)\nmesto (opciono)',
       amount: '545,95',
-      payerData: 'npr. Petar Petrović',
+      payerData: 'npr. Petar Petrović\nulica i broj (opciono)\nmesto (opciono)',
       purpose: 'npr. plaćanje računa',
       reference: 'npr. 474654465',
     },
