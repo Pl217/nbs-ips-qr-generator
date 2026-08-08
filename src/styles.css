@@ -86,61 +86,62 @@ input:disabled {
     margin-top: -0.5rem;
 }
 
-/* Распоред форме - на десктопу опонаша распоред налога за пренос
-   (лева колона: платилац / сврха / прималац;
-    десна колона: шифра+валута+износ / рачун примаоца / позив на број) */
+/* Распоред форме.
+   На мобилном (подразумевано): проста једноколонска листа - свако поље у
+   сопственом реду, редослед прати природни редослед у HTML-у
+   (Рачун примаоца, Назив примаоца, Износ, Валута, Платилац, Шифра
+   плаћања, Сврха плаћања, Модел, Позив на број).
+   На десктопу (≥1200px): распоред опонаша распоред налога за пренос
+   (образац бр. 3) - лева колона: платилац / сврха / прималац;
+   десна колона: шифра+валута+износ (један ред), рачун примаоца,
+   модел + позив на број (један ред). */
 .form-grid {
     display: flex;
     flex-direction: column;
 }
 
-.form-col-left,
-.form-col-right {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-row {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.form-row .form-group { flex: 1; min-width: 0; }
-.form-row-top .form-group-sm:first-child { flex: 1.5; }
-.form-row-top .form-group-sm:nth-child(2) { flex: 0.5; }
-.form-row-top .form-group-lg { flex: 1.7; }
-.form-row-ro .form-group-sm { flex: 0.3; }
-.form-row-ro .form-group-lg { flex: 2; }
-
-.form-row label {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-@media (min-width: 900px) {
-    .container { max-width: 900px; }
-
-    .form-grid {
-        flex-direction: row;
-        gap: 2.5rem;
-        align-items: flex-start;
-    }
-
-    .form-col-left,
-    .form-col-right {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .form-col-left {
-        border-right: 1px solid var(--border);
-        padding-right: 2.5rem;
-    }
-}
-
 @media (min-width: 1200px) {
     .container { max-width: 1200px; }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(14, 1fr);
+        column-gap: 1.25rem;
+        align-items: start;
+        grid-template-areas:
+            "p p p p p p p sf sf sf cur amt amt amt"
+            "s s s s s s s r  r  r  r  r  r  r"
+            "n n n n n n n mdl ro  ro  ro  ro  ro  ro";
+    }
+
+    .area-p { grid-area: p; }
+    .area-s { grid-area: s; }
+    .area-n { grid-area: n; }
+    .area-sf { grid-area: sf; }
+    .area-cur { grid-area: cur; }
+    .area-amt { grid-area: amt; }
+    .area-r { grid-area: r; }
+    .area-mdl { grid-area: mdl; }
+    .area-ro { grid-area: ro; }
+
+    .area-sf,
+    .area-r,
+    .area-mdl {
+        padding-left: 1.5rem;
+        border-left: 1px solid var(--border);
+    }
+
+    .form-grid label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* Styles applied to mobile/touch devices */
+@media (pointer: coarse) and (hover: none) {
+  .area-cur { display: none; }
+  .area-mdl { display: none; }
 }
 
 .field-feedback { 
