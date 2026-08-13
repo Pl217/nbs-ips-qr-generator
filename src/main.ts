@@ -4,10 +4,11 @@ import { IpsFormData, Lang, Theme } from './types';
 import {
   buildMultilineTagContent,
   ensureDecimalPart,
+  filterMultilineTagInput,
+  filterSingleLineTagInput,
   formatAmountDisplay,
   isValidAmountPaste,
   isValidName,
-  isValidNameChar,
   NAME_MAX_LENGTH,
   NAME_MAX_LINES,
   parseAmountInput,
@@ -70,8 +71,9 @@ class App {
     // 1. Account Input - само цифре и цртице
     const accInput = document.getElementById('field-R') as HTMLInputElement;
     accInput?.addEventListener('input', (e) => {
-      const t = e.target as HTMLInputElement;
-      t.value = t.value.replace(/[^0-9-]/g, '');
+      this.applyFilteredValue(e.target as HTMLInputElement, (v) =>
+        v.replace(/[^0-9-]/g, '')
+      );
     });
     accInput?.addEventListener('blur', () => this.handleAccountBlur(accInput));
 
@@ -84,31 +86,7 @@ class App {
 
       el.addEventListener('input', (e) => {
         const t = e.target as HTMLTextAreaElement;
-
-        // Филтрирање - дозвољавамо само важеће карактере и знак за нову
-        // линију (до NAME_MAX_LINES линија укупно).
-        let filtered = '';
-        let lineCount = 0;
-        for (let i = 0; i < t.value.length; i++) {
-          const ch = t.value[i];
-          if (ch === '\n') {
-            if (lineCount < NAME_MAX_LINES - 1) {
-              filtered += ch;
-              lineCount++;
-            }
-            continue;
-          }
-          if (isValidNameChar(ch)) {
-            filtered += ch;
-          }
-        }
-
-        // Ограничење укупне дужине садржаја на NAME_MAX_LENGTH карактера
-        if (filtered.length > NAME_MAX_LENGTH) {
-          filtered = filtered.substring(0, NAME_MAX_LENGTH);
-        }
-
-        t.value = filtered;
+const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
         this.updateNameFieldFeedback(tag, filtered);
       });
 
@@ -130,30 +108,18 @@ class App {
     purposeInput.addEventListener('input', () => {
       const feedback = document.getElementById('feedback-S');
 
-      // Филтрирање - дозвољавамо само важеће карактере (isValidNameChar
-      // већ одбацује знак за нову линију, чиме се обезбеђује да садржај
-      // остане у једној линији чак и приликом лепљења вишелинијског текста).
-      let filtered = '';
-      for (let i = 0; i < purposeInput.value.length; i++) {
-        const ch = purposeInput.value[i];
-        if (isValidNameChar(ch)) {
-          filtered += ch;
-        }
-      }
-      purposeInput.value = filtered;
+      // filterSingleLineTagInput већ одбацује знак за нову линију (чиме се
+      // обезбеђује да садржај остане у једној линији чак и приликом
+      // лепљења вишелинијског текста) и ограничава дужину на 35 карактера.
+      const filtered = this.applyFilteredValue(purposeInput, (v) =>
+        filterSingleLineTagInput(v, 35)
+      );
 
       if (!feedback) return;
 
-      const length = purposeInput.value.length;
-      const remaining = 35 - length;
+      const remaining = 35 - filtered.length;
 
-      if (length > 35) {
-        purposeInput.value = purposeInput.value.substring(0, 35);
-        feedback.style.display = 'block';
-        feedback.textContent =
-          TRANSLATIONS[this.lang].validation.purposeTooLong;
-        feedback.classList.add('error');
-      } else if (length >= 30) {
+      if (remaining <= 5) {
         // Упозорење када се приближи лимиту
         feedback.style.display = 'block';
         feedback.textContent = `${remaining} ${TRANSLATIONS[this.lang].validation.charactersRemaining}`;
@@ -221,11 +187,9 @@ class App {
     });
 
     amtInput.addEventListener('input', (e) => {
-      const t = e.target as HTMLInputElement;
-      let val = t.value;
-
+      this.applyFilteredValue(e.target as HTMLInputElement, (value) => {
       // Уклони све осим цифара и запете
-      val = val.replace(/[^0-9,]/g, '');
+        let val = value.replace(/[^0-9,]/g, '');
 
       // Дозволи само једну запету
       const parts = val.split(',');
@@ -234,11 +198,13 @@ class App {
       }
 
       // Ограничи децималне на 2 цифре
-      if (parts.length === 2 && parts[1].length > 2) {
-        val = parts[0] + ',' + parts[1].substring(0, 2);
+        const parts2 = val.split(',');
+        if (parts2.length === 2 && parts2[1].length > 2) {
+          val = parts2[0] + ',' + parts2[1].substring(0, 2);
       }
 
-      t.value = val;
+        return val;
+      });
     });
 
     amtInput.addEventListener('focus', () => {
@@ -315,9 +281,10 @@ class App {
     const roInput = document.getElementById('field-RO') as HTMLInputElement;
 
     roInput.addEventListener('input', (e) => {
-      const t = e.target as HTMLInputElement;
       // Дозволи само цифре и слова
-      t.value = t.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+      this.applyFilteredValue(e.target as HTMLInputElement, (v) =>
+        v.replace(/[^0-9A-Za-z]/g, '').toUpperCase()
+      );
     });
 
     roInput.addEventListener('blur', () => {
@@ -359,6 +326,40 @@ class App {
       e.preventDefault();
       this.generateQR();
     });
+
+  /**
+   * Примењује филтер на вредност input/textarea елемента, чувајући
+   * позицију курсора (уместо да се, као што `element.value = ...` иначе
+   * ради, курсор увек помери на крај садржаја). Ако су неки карактери
+   * одбачени приликом филтрирања, приказује кратку toast поруку.
+   * Враћа филтрирану вредност ради даље употребе (нпр. рачунање
+   * преосталог броја карактера).
+   */
+  applyFilteredValue(
+    el: HTMLInputElement | HTMLTextAreaElement,
+    filterFn: (value: string) => string
+  ): string {
+    const original = el.value;
+    const filtered = filterFn(original);
+
+    if (filtered === original) {
+      return filtered;
+    }
+
+    // Нова позиција курсора = број задржаних карактера ДО оригиналне
+    // позиције курсора (рачуна се применом истог филтера само на тај
+    // почетни део садржаја).
+    const cursorPos = el.selectionStart ?? original.length;
+    const newCursorPos = filterFn(original.substring(0, cursorPos)).length;
+
+    el.value = filtered;
+    try {
+      el.setSelectionRange(newCursorPos, newCursorPos);
+    } catch {
+      // Неки типови input елемената не подржавају selection range - није критично.
+    }
+
+    return filtered;
   }
 
   handleAccountBlur(input: HTMLInputElement) {
