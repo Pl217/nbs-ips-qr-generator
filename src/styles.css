@@ -217,6 +217,34 @@ button.circle:hover {
 }
 .overlay.open { opacity: 1; pointer-events: all; }
 
+/* Toast - кратка ненаметљива порука о недозвољеном уносу. Фиксно
+   позициониран (не утиче на распоред осталих елемената) при врху
+   странице, изнад свег осталог садржаја. */
+.toast {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    z-index: 100;
+    max-width: min(90vw, 420px);
+    padding: 0.65rem 1.25rem;
+    border-radius: 0.5rem;
+    background-color: var(--text);
+    color: var(--bg);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -0.5rem);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
 .hidden { display: none; }
 
 #qr-result-container {

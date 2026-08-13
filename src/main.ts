@@ -24,6 +24,7 @@ class App {
   form: HTMLFormElement | null = null;
   savedCodes: SavedCode[] = [];
   currentBankId: string | null = null; // Чување ID банке за ажурирање приликом промене језика
+  private toastTimeoutId: number | undefined;
 
   constructor() {
     this.init();
@@ -359,7 +360,37 @@ const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
       // Неки типови input елемената не подржавају selection range - није критично.
     }
 
+    // Toast приказујемо само када су карактери заиста одбачени (дужина
+    // мања него пре), а не за пуку трансформацију садржаја (нпр. превођење
+    // малих слова у велика код позива на број), да не бисмо непотребно
+    // узнемиравали корисника при исправном уносу.
+    if (filtered.length < original.length) {
+      this.showToast(TRANSLATIONS[this.lang].validation.invalidCharacter);
+    }
+
     return filtered;
+  }
+
+  /**
+   * Приказује кратку ненаметљиву поруку (toast) при врху странице у
+   * трајању од 3 секунде. Не помера остале елементе на страници.
+   */
+  showToast(message: string) {
+    const toast = document.getElementById('toast');
+    if (!toast) {
+      return;
+    }
+
+    toast.textContent = message;
+    toast.classList.add('show');
+
+    if (this.toastTimeoutId !== undefined) {
+      window.clearTimeout(this.toastTimeoutId);
+    }
+    this.toastTimeoutId = window.setTimeout(() => {
+      toast.classList.remove('show');
+      this.toastTimeoutId = undefined;
+    }, 3000);
   }
 
   handleAccountBlur(input: HTMLInputElement) {
