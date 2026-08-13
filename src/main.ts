@@ -18,6 +18,17 @@ import {
 
 type SavedCode = { name: string; data: IpsFormData };
 
+/** Кључ под којим се чува нацрт (draft) тренутно попуњене форме. */
+const DRAFT_STORAGE_KEY = 'ips-form-draft';
+
+/** Нацрт форме важи 30 минута од последње измене. */
+const DRAFT_MAX_AGE_MS = 30 * 60 * 1000;
+
+type DraftPayload = {
+  timestamp: number;
+  data: IpsFormData;
+};
+
 class App {
   lang: Lang = 'cyr';
   theme: Theme = 'light';
@@ -25,6 +36,7 @@ class App {
   savedCodes: SavedCode[] = [];
   currentBankId: string | null = null; // Чување ID банке за ажурирање приликом промене језика
   private toastTimeoutId: number | undefined;
+  private isMobileDevice = false;
 
   constructor() {
     this.init();
@@ -39,11 +51,16 @@ class App {
       this.savedCodes = [];
     }
 
+    this.isMobileDevice =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(pointer: coarse) and (hover: none)').matches;
+
     this.applyTheme();
     this.applyLang();
     this.cacheDom();
     this.renderDrawerList();
     this.bindEvents();
+    this.restoreDraftIfValid();
   }
 
   cacheDom() {
@@ -87,7 +104,7 @@ class App {
 
       el.addEventListener('input', (e) => {
         const t = e.target as HTMLTextAreaElement;
-const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
+        const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
         this.updateNameFieldFeedback(tag, filtered);
       });
 
@@ -189,20 +206,20 @@ const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
 
     amtInput.addEventListener('input', (e) => {
       this.applyFilteredValue(e.target as HTMLInputElement, (value) => {
-      // Уклони све осим цифара и запете
+        // Уклони све осим цифара и запете
         let val = value.replace(/[^0-9,]/g, '');
 
-      // Дозволи само једну запету
-      const parts = val.split(',');
-      if (parts.length > 2) {
-        val = parts[0] + ',' + parts.slice(1).join('');
-      }
+        // Дозволи само једну запету
+        const parts = val.split(',');
+        if (parts.length > 2) {
+          val = parts[0] + ',' + parts.slice(1).join('');
+        }
 
-      // Ограничи децималне на 2 цифре
+        // Ограничи децималне на 2 цифре
         const parts2 = val.split(',');
         if (parts2.length === 2 && parts2[1].length > 2) {
           val = parts2[0] + ',' + parts2[1].substring(0, 2);
-      }
+        }
 
         return val;
       });
@@ -328,6 +345,13 @@ const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
       this.generateQR();
     });
 
+    // Чување нацрта форме (само на мобилним уређајима) - слушамо на самој
+    // форми (делегирање), тако да не морамо додавати посебан listener за
+    // свако поље понаособ.
+    this.form?.addEventListener('input', () => this.saveDraft());
+    this.form?.addEventListener('change', () => this.saveDraft());
+  }
+
   /**
    * Примењује филтер на вредност input/textarea елемента, чувајући
    * позицију курсора (уместо да се, као што `element.value = ...` иначе
@@ -391,6 +415,124 @@ const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
       toast.classList.remove('show');
       this.toastTimeoutId = undefined;
     }, 3000);
+  }
+
+  /**
+   * Прикупља тренутне вредности свих поља форме у IpsFormData облику.
+   */
+  collectFormData(): IpsFormData {
+    const getVal = (id: string) =>
+      (
+        document.getElementById(`field-${id}`) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | null
+      )?.value || '';
+
+    return {
+      K: 'PR',
+      V: '01',
+      C: '1',
+      R: getVal('R'),
+      N: getVal('N'),
+      I: getVal('I'),
+      P: getVal('P'),
+      SF: getVal('SF'),
+      S: getVal('S'),
+      RO: getVal('RO'),
+    };
+  }
+
+  /**
+   * Чува тренутно стање форме (нацрт) у localStorage, заједно са временском
+   * ознаком, само на мобилним/додирним уређајима. На рачунарима browser
+   * ретко "убија" процес због батерије/меморије, па механизам тамо није
+   * потребан.
+   */
+  saveDraft() {
+    if (!this.isMobileDevice) {
+      return;
+    }
+
+    const payload: DraftPayload = {
+      timestamp: Date.now(),
+      data: this.collectFormData(),
+    };
+
+    try {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // localStorage можда није доступан (нпр. режим приватног прегледања) - занемари.
+    }
+  }
+
+  /**
+   * Приликом учитавања странице (само на мобилним уређајима): ако је
+   * страница поново учитана НАМЕРНО (нпр. повлачењем за освежавање или
+   * дугметом за освежавање), то служи као механизам за ручно брисање свих
+   * поља, па се сачувани нацрт брише и не враћа. У супротном (нпр. систем
+   * је у међувремену угасио процес прегледача због батерије/меморије, па
+   * се страница учитала изнова приликом повратка у апликацију), нацрт се
+   * враћа ако није старији од 30 минута.
+   */
+  restoreDraftIfValid() {
+    if (!this.isMobileDevice) {
+      return;
+    }
+
+    let navigationType: string | undefined;
+    try {
+      const [navEntry] = performance.getEntriesByType(
+        'navigation'
+      ) as PerformanceNavigationTiming[];
+      navigationType = navEntry?.type;
+    } catch {
+      navigationType = undefined;
+    }
+
+    let raw: string | null = null;
+    try {
+      raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    } catch {
+      raw = null;
+    }
+
+    if (navigationType === 'reload') {
+      // Намерно поновно учитавање - третирамо као ручно брисање форме.
+      try {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      } catch {
+        // занемари
+      }
+      return;
+    }
+
+    if (!raw) {
+      return;
+    }
+
+    let payload: DraftPayload | null = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      payload = null;
+    }
+
+    if (!payload || !payload.data) {
+      return;
+    }
+
+    const age = Date.now() - payload.timestamp;
+    if (age > DRAFT_MAX_AGE_MS || age < 0) {
+      try {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      } catch {
+        // занемари
+      }
+      return;
+    }
+
+    this.fillFormFields(payload.data);
   }
 
   handleAccountBlur(input: HTMLInputElement) {
@@ -539,8 +681,12 @@ const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
     this.renderDrawerList();
   }
 
-  loadCode(data: IpsFormData) {
-    // Попуни поља
+  /**
+   * Попуњава поља форме подацима (без затварања фиоке) - користи се и
+   * приликом учитавања сачуваног кôда из фиоке и приликом враћања нацрта
+   * форме (draft) на мобилним уређајима.
+   */
+  fillFormFields(data: IpsFormData) {
     const setVal = (id: string, val: string) =>
       ((
         document.getElementById(`field-${id}`) as
@@ -572,6 +718,10 @@ const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
     this.handleAccountBlur(
       document.getElementById('field-R') as HTMLInputElement
     );
+  }
+
+  loadCode(data: IpsFormData) {
+    this.fillFormFields(data);
 
     // Затвори фиоку
     document.getElementById('drawer')?.classList.remove('open');

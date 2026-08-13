@@ -209,6 +209,62 @@ export function buildMultilineTagContent(raw: string): string {
 }
 
 /**
+ * Филтрира вишелинијски садржај тагова N/P у складу са дозвољеним
+ * карактерима, максималним бројем линија (NAME_MAX_LINES) и максималном
+ * дужином (NAME_MAX_LENGTH). Чиста функција (искључиво зависи од уноса),
+ * што омогућава да се исти позив користи и за рачунање нове позиције
+ * курсора приликом филтрирања.
+ */
+export function filterMultilineTagInput(value: string): string {
+  let filtered = '';
+  let lineCount = 0;
+
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i];
+    if (ch === '\n') {
+      if (lineCount < NAME_MAX_LINES - 1) {
+        filtered += ch;
+        lineCount++;
+      }
+      continue;
+    }
+    if (isValidNameChar(ch)) {
+      filtered += ch;
+    }
+  }
+
+  if (filtered.length > NAME_MAX_LENGTH) {
+    filtered = filtered.substring(0, NAME_MAX_LENGTH);
+  }
+
+  return filtered;
+}
+
+/**
+ * Филтрира једнолинијски садржај (нпр. таг S) - исти дозвољени карактери
+ * као код N/P (isValidNameChar већ одбацује знак за нову линију), уз
+ * ограничење максималне дужине. Чиста функција.
+ */
+export function filterSingleLineTagInput(
+  value: string,
+  maxLength: number
+): string {
+  let filtered = '';
+
+  for (const ch of value) {
+    if (isValidNameChar(ch)) {
+      filtered += ch;
+    }
+  }
+
+  if (filtered.length > maxLength) {
+    filtered = filtered.substring(0, maxLength);
+  }
+
+  return filtered;
+}
+
+/**
  * Провера да ли садржај налепљен (paste) у поље износа задовољава
  * стандард онога што сме бити унето у поље: цифре, опционо тачке као
  * сепаратор хиљада и опционо зарез са до 2 децимале.
