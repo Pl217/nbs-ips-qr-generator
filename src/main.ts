@@ -6,6 +6,7 @@ import {
   ensureDecimalPart,
   filterMultilineTagInput,
   filterSingleLineTagInput,
+  findFirstDroppedChar,
   formatAmountDisplay,
   isValidAmountPaste,
   isValidName,
@@ -68,6 +69,19 @@ class App {
   }
 
   bindEvents() {
+    // Позиционирање toast-a при врху ТРЕНУТНО видљивог дела екрана - пратимо
+    // промене видног поља (нпр. приказ тастатуре или сакривање адресне
+    // траке на телефону) да би порука остала видљива и када корисник
+    // скролује док је порука приказана.
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () =>
+        this.positionToast()
+      );
+      window.visualViewport.addEventListener('scroll', () =>
+        this.positionToast()
+      );
+    }
+
     document
       .getElementById('btn-theme')
       ?.addEventListener('click', () => this.toggleTheme());
@@ -104,7 +118,17 @@ class App {
 
       el.addEventListener('input', (e) => {
         const t = e.target as HTMLTextAreaElement;
-        const filtered = this.applyFilteredValue(t, filterMultilineTagInput);
+        const filtered = this.applyFilteredValue(
+          t,
+          filterMultilineTagInput,
+          (dropped) =>
+            // Ако је одбачен управо знак за нову линију, реч је о
+            // прекорачењу дозвољеног броја линија (3), а не о недозвољеном
+            // карактеру самом по себи - прецизнија порука за тај случај.
+            dropped === '\n'
+              ? TRANSLATIONS[this.lang].validation.nameTooManyLines
+              : this.formatInvalidCharMessage(dropped)
+        );
         this.updateNameFieldFeedback(tag, filtered);
       });
 
@@ -356,13 +380,16 @@ class App {
    * Примењује филтер на вредност input/textarea елемента, чувајући
    * позицију курсора (уместо да се, као што `element.value = ...` иначе
    * ради, курсор увек помери на крај садржаја). Ако су неки карактери
-   * одбачени приликом филтрирања, приказује кратку toast поруку.
-   * Враћа филтрирану вредност ради даље употребе (нпр. рачунање
-   * преосталог броја карактера).
+   * одбачени приликом филтрирања, приказује кратку toast поруку која
+   * наводи ТАЧНО који знак је одбачен. Опционим `resolveMessage` позивом
+   * може се прилагодити порука за посебне случајеве (нпр. прекорачење
+   * дозвољеног броја линија). Враћа филтрирану вредност ради даље
+   * употребе (нпр. рачунање преосталог броја карактера).
    */
   applyFilteredValue(
     el: HTMLInputElement | HTMLTextAreaElement,
-    filterFn: (value: string) => string
+    filterFn: (value: string) => string,
+    resolveMessage?: (droppedChar: string | null) => string
   ): string {
     const original = el.value;
     const filtered = filterFn(original);
@@ -389,21 +416,60 @@ class App {
     // малих слова у велика код позива на број), да не бисмо непотребно
     // узнемиравали корисника при исправном уносу.
     if (filtered.length < original.length) {
-      this.showToast(TRANSLATIONS[this.lang].validation.invalidCharacter);
+      const dropped = findFirstDroppedChar(original, filtered);
+      const message = resolveMessage
+        ? resolveMessage(dropped)
+        : this.formatInvalidCharMessage(dropped);
+      this.showToast(message);
     }
 
     return filtered;
   }
 
   /**
-   * Приказује кратку ненаметљиву поруку (toast) при врху странице у
-   * трајању од 3 секунде. Не помера остале елементе на страници.
+   * Формира поруку о недозвољеном знаку, наводећи тачно који је знак у
+   * питању (ако је познат).
+   */
+  formatInvalidCharMessage(char: string | null): string {
+    const v = TRANSLATIONS[this.lang].validation;
+    if (!char) {
+      return v.invalidCharacter;
+    }
+    return v.invalidCharacterWithChar.replace('{char}', char);
+  }
+
+  /**
+   * Позиционира toast тако да увек буде при врху ТРЕНУТНО видљивог дела
+   * екрана. На телефону обичан `position: fixed` није увек довољан, јер се
+   * видљива површина мења када се прикаже тастатура или када се сакрије
+   * адресна трака browser-a - зато користимо Visual Viewport API (нативна
+   * подршка browser-а, без библиотека) да бисмо пратили стварно видљиви
+   * врх екрана.
+   */
+  positionToast() {
+    const toast = document.getElementById('toast');
+    if (!toast) {
+      return;
+    }
+
+    const vv = window.visualViewport;
+    if (vv) {
+      toast.style.top = `${vv.offsetTop + 12}px`;
+    }
+  }
+
+  /**
+   * Приказује кратку ненаметљиву поруку (toast) о грешци при врху видног
+   * поља у трајању од 3 секунде. Не помера остале елементе на страници и
+   * остаје видљива и на телефону (види positionToast).
    */
   showToast(message: string) {
     const toast = document.getElementById('toast');
     if (!toast) {
       return;
     }
+
+    this.positionToast();
 
     toast.textContent = message;
     toast.classList.add('show');

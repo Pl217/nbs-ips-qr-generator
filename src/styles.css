@@ -217,23 +217,25 @@ button.circle:hover {
 }
 .overlay.open { opacity: 1; pointer-events: all; }
 
-/* Toast - кратка ненаметљива порука о недозвољеном уносу. Фиксно
-   позициониран (не утиче на распоред осталих елемената) при врху
-   странице, изнад свег осталог садржаја. */
+/* Toast - кратка ненаметљива порука о грешци при уносу. Фиксно
+   позициониран (не утиче на распоред осталих елемената), при врху видног
+   поља. JS (positionToast) додатно коригује "top" на телефону, узимајући у
+   обзир тастатуру и адресну траку browser-a (Visual Viewport API). */
 .toast {
     position: fixed;
-    top: 1rem;
+    top: max(1rem, env(safe-area-inset-top, 1rem));
     left: 50%;
     z-index: 100;
     max-width: min(90vw, 420px);
     padding: 0.65rem 1.25rem;
     border-radius: 0.5rem;
-    background-color: var(--text);
-    color: var(--bg);
+    background-color: #dc2626;
+    color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.2);
     font-size: 0.9rem;
     font-weight: 500;
     text-align: center;
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, -0.5rem);

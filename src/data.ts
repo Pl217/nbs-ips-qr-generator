@@ -60,6 +60,7 @@ export const TRANSLATIONS = {
       nameTooManyLines: 'Дозвољено је највише 3 линије.',
       invalidAmountPaste: 'Налепљени садржај није у важећем формату износа.',
       invalidCharacter: 'Унет је недозвољен знак.',
+      invalidCharacterWithChar: 'Знак „{char}“ није дозвољен.',
     },
     placeholders: {
       saveName: 'Унесите назив за чување...',
@@ -103,6 +104,7 @@ export const TRANSLATIONS = {
       nameTooManyLines: 'Dozvoljeno je najviše 3 linije.',
       invalidAmountPaste: 'Nalepljeni sadržaj nije u važećem formatu iznosa.',
       invalidCharacter: 'Unet je nedozvoljen znak.',
+      invalidCharacterWithChar: 'Znak „{char}“ nije dozvoljen.',
     },
     placeholders: {
       saveName: 'Unesite naziv za čuvanje...',
