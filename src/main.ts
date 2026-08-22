@@ -19,6 +19,22 @@ import {
 
 type SavedCode = { name: string; data: IpsFormData };
 
+/**
+ * Уноси текст на позицију курсора у input елементу (замењујући тренутно
+ * означени садржај, ако постоји), помера курсор иза уметнутог текста и
+ * покреће 'input' догађај како би постојећа логика за форматирање/чување
+ * нацрта форме исправно реаговала - исто као да је корисник директно
+ * откуцао тај текст.
+ */
+function insertTextAtCursor(el: HTMLInputElement, text: string) {
+  const start = el.selectionStart ?? el.value.length;
+  const end = el.selectionEnd ?? el.value.length;
+  el.value = el.value.slice(0, start) + text + el.value.slice(end);
+  const newPos = start + text.length;
+  el.setSelectionRange(newPos, newPos);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 /** Кључ под којим се чува нацрт (draft) тренутно попуњене форме. */
 const DRAFT_STORAGE_KEY = 'ips-form-draft';
 
@@ -195,9 +211,10 @@ class App {
       }
 
       const currentVal = amtInput.value;
+      const hasComma = currentVal.includes(',');
 
-      // Провери да ли већ постоји запета
-      if (currentVal.includes(',')) {
+      // Провери да ли децимални део већ има 2 цифре, и да ли је курсор после запете
+      if (hasComma) {
         const parts = currentVal.split(',');
         const decimalPart = parts[1];
 
@@ -219,8 +236,15 @@ class App {
         return;
       }
 
-      // Дозволи запету само ако већ не постоји
-      if (e.key === ',' && !currentVal.includes(',')) {
+      // Децимални раздвајач - зарез (,) директно, или тачка (.) која може
+      // потицати са нумеричке тастатуре рачунара (која, у зависности од
+      // системских регионалних подешавања, некад даје тачку уместо зареза
+      // за исти физички тастер), или са екранске тастатуре телефона (која
+      // често приказује и тачку и зарез). У оба случаја увек уносимо зарез,
+      // ради доследности, без обзира шта је browser пријавио као e.key.
+      if ((e.key === ',' || e.key === '.') && !hasComma) {
+        e.preventDefault();
+        insertTextAtCursor(amtInput, ',');
         return;
       }
 
